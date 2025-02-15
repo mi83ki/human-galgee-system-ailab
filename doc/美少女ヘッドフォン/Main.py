@@ -2,16 +2,14 @@
 import threading
 import time
 import tkinter as tk
-import librosa
+
 import numpy as np
+import pyaudio
 import pyworld
 import speech_recognition as sr
-from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
-from scipy.stats import norm
 from PIL import Image, ImageTk
-
-
-import pyaudio
+from pycaw.pycaw import AudioUtilities
+from scipy.stats import norm
 
 censor_words = ["こんにちは","ドラえもん","みやさん","バカ","アホ","まぬけ"] #検閲ワード（仮)
 
@@ -50,7 +48,7 @@ def change_voice_parameter():
     elif selected_value == "normal":
         f0_rate = 1.0
         sp_rate = 1.0
-    
+
     return f0_rate,sp_rate
 
 
@@ -92,7 +90,7 @@ class WorkerThread(threading.Thread):
         self.result = []
 
         self.prev_samples = []
-        
+
     def stop(self):
         self.is_stop = True
         self.join()
@@ -103,9 +101,9 @@ class WorkerThread(threading.Thread):
                 with self.lock:
                     buf = self.buffer[0]
                     self.buffer = self.buffer[1:]
-               
-                chunk_size = len(buf[0]['data'])
-                sample = np.concatenate([b['data'] for b in buf])
+
+                chunk_size = len(buf[0]["data"])
+                sample = np.concatenate([b["data"] for b in buf])
 
                 # pitch sift
                 sample = sample.astype(np.float64)
@@ -135,7 +133,7 @@ class WorkerThread(threading.Thread):
 
                 if len(self.prev_samples) >= 16:
                     self.prev_samples = self.prev_samples[1:]
-            
+
                 with self.lock:
                     self.result.extend(sample.tolist())
             else:
@@ -144,7 +142,7 @@ class WorkerThread(threading.Thread):
     def push_chunk(self, chunk):
         with self.lock:
             self.buffer.append(chunk)
-    
+
     def pop_chunk(self, chunk_size):
         result = None
         with self.lock:
@@ -154,7 +152,7 @@ class WorkerThread(threading.Thread):
 
         return result
 
-class AudioFilter():
+class AudioFilter:
     def __init__(self, worker, block_length, margin_length):
         self.p = pyaudio.PyAudio()
 
@@ -188,20 +186,20 @@ class AudioFilter():
         self.margin_length = margin_length
 
     def get_channels(self, p):
-        input_index = self.p.get_default_input_device_info()['index']
-        output_index = self.p.get_default_output_device_info()['index']
+        input_index = self.p.get_default_input_device_info()["index"]
+        output_index = self.p.get_default_output_device_info()["index"]
         #output_index = p.get_default_output_device_info()['index']
         for idx in range(self.p.get_device_count()):
             info = self.p.get_device_info_by_index(idx)
-            if 'BlackHole' in info['name']:
-                output_index = info['index']
+            if "BlackHole" in info["name"]:
+                output_index = info["index"]
         return input_index, output_index
 
 #  format  : ストリームを読み書きするときのデータ型
 #  channels: ステレオかモノラルかの選択 1でモノラル 2でステレオ
 #  rate    : サンプル周波数
 #  output  : 出力モード
-    
+
     # コールバック関数（再生が必要なときに呼び出される）
     def callback(self, in_data, frame_count, time_info, status):
         if ENABLE_FORMANT_CONV == True:
@@ -210,9 +208,9 @@ class AudioFilter():
 
             decoded_data = decoded_data.reshape(-1, 1024)
             for c in decoded_data:
-                self.chunk.append({'data': c, 'index': self.index})
+                self.chunk.append({"data": c, "index": self.index})
                 self.index += 1
-            
+
             #if decoded_data.max() > 1000:
             if decoded_data.max() > 0:
                 self.age = self.block_length
@@ -228,32 +226,32 @@ class AudioFilter():
 
                     # remove self.chunk[0:8]
                     self.chunk = self.chunk[1:]
-            
+
             ## Pop chunk to current list
             ret = self.worker.pop_chunk(chunk_size)
-            
+
             # Get head from current list
-            
+
             if ret is not None:
                 data = ret.astype(np.int16)
                 #print(len(data), data.dtype, data.max())
             else:
                 data = np.zeros(chunk_size, dtype=np.int16)
-            
+
             out_data = data.tobytes()
         else :
             out_data = in_data
-        
+
         return (out_data, pyaudio.paContinue)
-    
+
     # 音声取り込みをやめるとき
     def close(self):
-        self.p.terminate() 
-    
+        self.p.terminate()
+
     def mute_audio(self): #スピーカーへの音量を小さくする
         return
 
-class AudioCensorship(): #音声検閲クラス
+class AudioCensorship:  # 音声検閲クラス
     def character_search(self, source_words, censor_words): # 文字起こしした文字から検閲ワードを見つける
         word_detect = False # 検閲ワード検出フラグ
         for item in censor_words:
@@ -263,7 +261,7 @@ class AudioCensorship(): #音声検閲クラス
                 word_detect = True
         return word_detect
 
-class AudioController(object): #スピーカーのボリューム調整クラス
+class AudioController:  # スピーカーのボリューム調整クラス
     def __init__(self):
         self.process_name = "python.exe"
         self.defaultvolume = 0.1 #初期ボリューム
@@ -276,15 +274,15 @@ class AudioController(object): #スピーカーのボリューム調整クラス
             interface = session.SimpleAudioVolume
             if session.Process and session.Process.name() == self.process_name:
                 interface.SetMute(1, None)
-                print(self.process_name, 'has been muted.')
-    
+                print(self.process_name, "has been muted.")
+
     def unmute(self): #アプリをアンミュートする
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
             if session.Process and session.Process.name() == self.process_name:
                 interface.SetMute(0, None)
-                print(self.process_name, 'has been unmuted.')
+                print(self.process_name, "has been unmuted.")
 
     def set_volume(self, decibels): #アプリのボリュームを変える
         sessions = AudioUtilities.GetAllSessions()
@@ -294,8 +292,8 @@ class AudioController(object): #スピーカーのボリューム調整クラス
                 # only set volume in the range 0.0 to 1.0
                 self.volume = min(1.0, max(0.0, decibels))
                 interface.SetMasterVolume(self.volume, None)
-                print('Volume set to', self.volume)  # debug
-    
+                print("Volume set to", self.volume)  # debug
+
     def set_enhanced_volume(self): #self.enhancedvolumeにボリュームを変える
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
@@ -304,40 +302,38 @@ class AudioController(object): #スピーカーのボリューム調整クラス
                 # only set volume in the range 0.0 to 1.0
                 self.volume = min(1.0, max(0.0, self.enhancedvolume))
                 interface.SetMasterVolume(self.volume, None)
-                print('Volume set to', self.volume)  # debug
-    
+                print("Volume set to", self.volume)  # debug
+
     def process_volume(self): #現在のボリュームを取得する
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
             if session.Process and session.Process.name() == self.process_name:
-                print('Volume:', interface.GetMasterVolume())  # debug
+                print("Volume:", interface.GetMasterVolume())  # debug
                 return interface.GetMasterVolume()
 
 
-class Timer(): #タイマークラス
+class Timer:  # タイマークラス
     def __init__(self):
         self.timer = time.time()
-    
-    def is_time_out(self, settime): 
+
+    def is_time_out(self, settime):
         if time.time() - self.timer > settime:
             return True
-        else:
-            return False
+        return False
 
-class KeyInput(): #キー入力クラス
-    
+class KeyInput:  # キー入力クラス
     def __init__(self):
         self.start = key_input(self)
-    
-    def key_input(self,censor_words): #
+
+    def key_input(self, censor_words):
         while True:
             input = input("検閲ワードを入力してください : ")
             censor_words.append(input)
-            
+
             right_input = False
             cont_input = False
-            while right_input == False : 
+            while right_input == False:
                 input_y = ("更に閲覧ワードの入力を続けますか？(y/n) : ").lower() # inputを小文字に変換
                 if input_y == "y" :
                     right_input = True
@@ -352,7 +348,6 @@ class KeyInput(): #キー入力クラス
                 pass
             else :
                 break
-        return
 
 
 
@@ -364,7 +359,7 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     #AudioControllerのインスタンスを作る
     aco = AudioController()
 
-    
+
     block_length = 8
     margin_length = 1
 
@@ -373,7 +368,7 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     worker_th.start()
     #AudioFileterのインスタンスを作る
     af = AudioFilter(worker_th, block_length, margin_length)
-    
+
     #ストリーミングを始める
     af.stream.start_stream()
 
@@ -432,36 +427,36 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     #テキストの作成
     font_t = ("游ゴシック", 30,"bold")
     text = tk.Label(text="マイクを通した声が色んな声に変化するよ！ヘッドフォンをつけてみてね！",font=font_t)
-    
+
     # テキストの配置
     text.place(
         x=20,
-        y=20
+        y=20,
     )
     # ボタンの配置
     normal_button.place(
         x=0,
-        y=50
+        y=50,
     )
     robot_button.place(
         x=0,
-        y=200
+        y=200,
     )
     low_button.place(
         x=0,
-        y=350
+        y=350,
     )
     high_button.place(
         x=0,
-        y=500
+        y=500,
     )
     criminal_button.place(
         x=0,
-        y=650
+        y=650,
     )
     img_label.place(
         x=500,
-        y=100
+        y=100,
     )
 
     root.mainloop()
@@ -476,7 +471,7 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
                 print("音声を読み取っています")
                 audio = r.listen(source)
                 try:
-                    query = r.recognize_google(audio, language='ja-JP')
+                    query = r.recognize_google(audio, language="ja-JP")
                     print(query)
                     words_detect = ace.character_search(query, censor_words)
                     if words_detect == True:
@@ -484,7 +479,7 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
                         mute_timer = Timer()
                 except:
                     print("エラー")
-                
+
                 volume_now = aco.process_volume()
                 if round(volume_now, 2) == aco.enhancedvolume: # 現在のボリュームが耳拡張ボリュームだった場合にデフォルトボリュームに戻す
                     if mute_timer.is_time_out(5) :
