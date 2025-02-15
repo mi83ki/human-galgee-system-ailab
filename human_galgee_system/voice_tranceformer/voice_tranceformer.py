@@ -11,10 +11,18 @@ from PIL import Image, ImageTk
 from pycaw.pycaw import AudioUtilities
 from scipy.stats import norm
 
-censor_words = ["こんにちは","ドラえもん","みやさん","バカ","アホ","まぬけ"] #検閲ワード（仮)
+censor_words = [
+    "こんにちは",
+    "ドラえもん",
+    "みやさん",
+    "バカ",
+    "アホ",
+    "まぬけ",
+]  # 検閲ワード（仮)
 
-ENABLE_FORMANT_CONV = True # フォルマント変換による音声加工を有効にするかどうか
-ENABLE_WORD_RECOGNITION = False # 単語の検閲モードを有効にするかどうか
+ENABLE_FORMANT_CONV = True  # フォルマント変換による音声加工を有効にするかどうか
+ENABLE_WORD_RECOGNITION = False  # 単語の検閲モードを有効にするかどうか
+
 
 def update_image():
     if var.get() == "low":
@@ -27,6 +35,7 @@ def update_image():
         img_label.config(image=robot_img)
     elif var.get() == "normal":
         img_label.config(image=normal_img)
+
 
 def change_voice_parameter():
     selected_value = var.get()
@@ -49,13 +58,12 @@ def change_voice_parameter():
         f0_rate = 1.0
         sp_rate = 1.0
 
-    return f0_rate,sp_rate
+    return f0_rate, sp_rate
 
 
-
-def convert(signal,f0_rate,sp_rate):
-    #f0_rate = 2.4
-    #sp_rate = 0.78
+def convert(signal, f0_rate, sp_rate):
+    # f0_rate = 2.4
+    # sp_rate = 0.78
     sample_rate = 16000
 
     f0, t = pyworld.dio(signal, sample_rate)
@@ -69,7 +77,7 @@ def convert(signal,f0_rate,sp_rate):
     modified_sp = np.zeros_like(sp)
     sp_range = int(modified_sp.shape[1] * sp_rate)
     for f in range(modified_sp.shape[1]):
-        if (f < sp_range):
+        if f < sp_range:
             if sp_rate >= 1.0:
                 modified_sp[:, f] = sp[:, int(f / sp_rate)]
             else:
@@ -80,6 +88,7 @@ def convert(signal,f0_rate,sp_rate):
     y = pyworld.synthesize(modified_f0, modified_sp, ap, sample_rate)
 
     return y
+
 
 class WorkerThread(threading.Thread):
     def __init__(self, block_length, margin_length):
@@ -107,22 +116,22 @@ class WorkerThread(threading.Thread):
 
                 # pitch sift
                 sample = sample.astype(np.float64)
-                f0_rate,sp_rate = change_voice_parameter()
-                sample = convert(sample,f0_rate,sp_rate)
+                f0_rate, sp_rate = change_voice_parameter()
+                sample = convert(sample, f0_rate, sp_rate)
 
                 # overlap
                 self.prev_samples.append(sample)
 
                 length = len(sample)
-                weight = norm.pdf(np.arange(0, length), length/2, length/8)
+                weight = norm.pdf(np.arange(0, length), length / 2, length / 8)
 
                 caches = []
                 wcaches = []
                 for i, sample in enumerate(self.prev_samples):
                     pos = (len(self.prev_samples) - i) * chunk_size
                     if len(sample) >= pos + chunk_size:
-                        cache = sample[pos:pos+chunk_size]
-                        wcache = weight[pos:pos+chunk_size]
+                        cache = sample[pos : pos + chunk_size]
+                        wcache = weight[pos : pos + chunk_size]
                         caches.append(cache)
                         wcaches.append(wcache)
 
@@ -152,6 +161,7 @@ class WorkerThread(threading.Thread):
 
         return result
 
+
 class AudioFilter:
     def __init__(self, worker, block_length, margin_length):
         self.p = pyaudio.PyAudio()
@@ -159,21 +169,24 @@ class AudioFilter:
         for i in range(self.p.get_device_count()):
             print(self.p.get_device_info_by_index(i))
 
-        self.channels = 1 #マイクがモノラルの場合は1    #現在1じゃないと動かない
-        self.rate = 16000 #DVDレベルなので重かったら16000    #現在16000じゃないと動かない
+        self.channels = 1  # マイクがモノラルの場合は1    #現在1じゃないと動かない
+        self.rate = (
+            16000  # DVDレベルなので重かったら16000    #現在16000じゃないと動かない
+        )
 
         input_index, output_index = self.get_channels(self.p)
         self.format = pyaudio.paInt16
         self.stream = self.p.open(
-            format = self.format,
-            channels = self.channels,
-            rate = self.rate,
+            format=self.format,
+            channels=self.channels,
+            rate=self.rate,
             frames_per_buffer=1024,
-            input_device_index = 1,
-            output_device_index = output_index,
-            output = True,
-            input = True,
-            stream_callback=self.callback)#音声が流れてきた時に叩くCallBack関数を指定する
+            input_device_index=1,
+            output_device_index=output_index,
+            output=True,
+            input=True,
+            stream_callback=self.callback,
+        )  # 音声が流れてきた時に叩くCallBack関数を指定する
 
         # Status:0が待ち
         self.age = 0
@@ -188,17 +201,17 @@ class AudioFilter:
     def get_channels(self, p):
         input_index = self.p.get_default_input_device_info()["index"]
         output_index = self.p.get_default_output_device_info()["index"]
-        #output_index = p.get_default_output_device_info()['index']
+        # output_index = p.get_default_output_device_info()['index']
         for idx in range(self.p.get_device_count()):
             info = self.p.get_device_info_by_index(idx)
             if "BlackHole" in info["name"]:
                 output_index = info["index"]
         return input_index, output_index
 
-#  format  : ストリームを読み書きするときのデータ型
-#  channels: ステレオかモノラルかの選択 1でモノラル 2でステレオ
-#  rate    : サンプル周波数
-#  output  : 出力モード
+    #  format  : ストリームを読み書きするときのデータ型
+    #  channels: ステレオかモノラルかの選択 1でモノラル 2でステレオ
+    #  rate    : サンプル周波数
+    #  output  : 出力モード
 
     # コールバック関数（再生が必要なときに呼び出される）
     def callback(self, in_data, frame_count, time_info, status):
@@ -211,18 +224,18 @@ class AudioFilter:
                 self.chunk.append({"data": c, "index": self.index})
                 self.index += 1
 
-            #if decoded_data.max() > 1000:
+            # if decoded_data.max() > 1000:
             if decoded_data.max() > 0:
                 self.age = self.block_length
             else:
                 self.age = max(0, self.age - 1)
 
             if self.age == 0:
-                self.chunk = self.chunk[-self.margin_length:]
+                self.chunk = self.chunk[-self.margin_length :]
             else:
                 while len(self.chunk) >= self.block_length:
                     # push self.chunk[0:16]
-                    self.worker.push_chunk(self.chunk[0:self.block_length])
+                    self.worker.push_chunk(self.chunk[0 : self.block_length])
 
                     # remove self.chunk[0:8]
                     self.chunk = self.chunk[1:]
@@ -234,12 +247,12 @@ class AudioFilter:
 
             if ret is not None:
                 data = ret.astype(np.int16)
-                #print(len(data), data.dtype, data.max())
+                # print(len(data), data.dtype, data.max())
             else:
                 data = np.zeros(chunk_size, dtype=np.int16)
 
             out_data = data.tobytes()
-        else :
+        else:
             out_data = in_data
 
         return (out_data, pyaudio.paContinue)
@@ -248,12 +261,17 @@ class AudioFilter:
     def close(self):
         self.p.terminate()
 
-    def mute_audio(self): #スピーカーへの音量を小さくする
+    def mute_audio(self):  # スピーカーへの音量を小さくする
         return
 
+
 class AudioCensorship:  # 音声検閲クラス
-    def character_search(self, source_words, censor_words): # 文字起こしした文字から検閲ワードを見つける
-        word_detect = False # 検閲ワード検出フラグ
+    def character_search(
+        self,
+        source_words,
+        censor_words,
+    ):  # 文字起こしした文字から検閲ワードを見つける
+        word_detect = False  # 検閲ワード検出フラグ
         for item in censor_words:
             cw_locate = source_words.find(item)
             if cw_locate != -1:
@@ -261,14 +279,17 @@ class AudioCensorship:  # 音声検閲クラス
                 word_detect = True
         return word_detect
 
+
 class AudioController:  # スピーカーのボリューム調整クラス
     def __init__(self):
         self.process_name = "python.exe"
-        self.defaultvolume = 0.1 #初期ボリューム
-        self.enhancedvolume = 0.7 #耳拡張時のボリューム
-        self.set_defaultvolume = self.set_volume(self.defaultvolume) #インスタンス生成時にデフォルトのボリュームをセット
+        self.defaultvolume = 0.1  # 初期ボリューム
+        self.enhancedvolume = 0.7  # 耳拡張時のボリューム
+        self.set_defaultvolume = self.set_volume(
+            self.defaultvolume,
+        )  # インスタンス生成時にデフォルトのボリュームをセット
 
-    def mute(self): #アプリをミュートにする
+    def mute(self):  # アプリをミュートにする
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
@@ -276,7 +297,7 @@ class AudioController:  # スピーカーのボリューム調整クラス
                 interface.SetMute(1, None)
                 print(self.process_name, "has been muted.")
 
-    def unmute(self): #アプリをアンミュートする
+    def unmute(self):  # アプリをアンミュートする
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
@@ -284,7 +305,7 @@ class AudioController:  # スピーカーのボリューム調整クラス
                 interface.SetMute(0, None)
                 print(self.process_name, "has been unmuted.")
 
-    def set_volume(self, decibels): #アプリのボリュームを変える
+    def set_volume(self, decibels):  # アプリのボリュームを変える
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
@@ -294,7 +315,7 @@ class AudioController:  # スピーカーのボリューム調整クラス
                 interface.SetMasterVolume(self.volume, None)
                 print("Volume set to", self.volume)  # debug
 
-    def set_enhanced_volume(self): #self.enhancedvolumeにボリュームを変える
+    def set_enhanced_volume(self):  # self.enhancedvolumeにボリュームを変える
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
@@ -304,7 +325,7 @@ class AudioController:  # スピーカーのボリューム調整クラス
                 interface.SetMasterVolume(self.volume, None)
                 print("Volume set to", self.volume)  # debug
 
-    def process_volume(self): #現在のボリュームを取得する
+    def process_volume(self):  # 現在のボリュームを取得する
         sessions = AudioUtilities.GetAllSessions()
         for session in sessions:
             interface = session.SimpleAudioVolume
@@ -322,6 +343,7 @@ class Timer:  # タイマークラス
             return True
         return False
 
+
 class KeyInput:  # キー入力クラス
     def __init__(self):
         self.start = key_input(self)
@@ -334,31 +356,29 @@ class KeyInput:  # キー入力クラス
             right_input = False
             cont_input = False
             while right_input == False:
-                input_y = ("更に閲覧ワードの入力を続けますか？(y/n) : ").lower() # inputを小文字に変換
-                if input_y == "y" :
+                input_y = (
+                    "更に閲覧ワードの入力を続けますか？(y/n) : "
+                ).lower()  # inputを小文字に変換
+                if input_y == "y":
                     right_input = True
                     cont_input = True
-                elif input_y == "n" :
+                elif input_y == "n":
                     right_input = False
                     cont_input = False
-                else :
+                else:
                     print("y か n を入力してください")
                     right_input = False
-            if cont_input == True :
+            if cont_input == True:
                 pass
-            else :
+            else:
                 break
 
 
-
-
-if __name__ == "__main__": #importされた場合に実行しないようにするらしい
-
-    #AudioCensorshipのインスタンスを作る
+def main():
+    # AudioCensorshipのインスタンスを作る
     ace = AudioCensorship()
-    #AudioControllerのインスタンスを作る
+    # AudioControllerのインスタンスを作る
     aco = AudioController()
-
 
     block_length = 8
     margin_length = 1
@@ -366,17 +386,17 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     worker_th = WorkerThread(block_length, margin_length)
     worker_th.setDaemon(True)
     worker_th.start()
-    #AudioFileterのインスタンスを作る
+    # AudioFileterのインスタンスを作る
     af = AudioFilter(worker_th, block_length, margin_length)
 
-    #ストリーミングを始める
+    # ストリーミングを始める
     af.stream.start_stream()
 
     root = tk.Tk()
     root.geometry("1920x1080")
     root.title("美少女ヘッドフォンver1.5")
 
-    #画像をオープン
+    # 画像をオープン
     high = Image.open("high.png")
     low = Image.open("low.png")
     crimate = Image.open("crimate.png")
@@ -389,17 +409,12 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     rrobot = robot.resize((800, 800))
     rnormal = normal.resize((800, 800))
 
-
-
-
     # 画像を読み込む
     low_img = ImageTk.PhotoImage(rlow)
     high_img = ImageTk.PhotoImage(rhigh)
     crimate_img = ImageTk.PhotoImage(rcrimate)
     robot_img = ImageTk.PhotoImage(rrobot)
     normal_img = ImageTk.PhotoImage(rnormal)
-
-
 
     # ラジオボタンの作成
     var = tk.StringVar()
@@ -408,12 +423,46 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     img_label = tk.Label(root, image=high_img)
 
     font = ("游ゴシック", 35)
-    normal_button = tk.Radiobutton(root, text="そのまま", variable=var, value="normal",font=font,command = update_image)
-    robot_button = tk.Radiobutton(root, text="ロボットボイス", variable=var, value="robot",font=font,command = update_image)
-    low_button = tk.Radiobutton(root, text="イケメンボイス", variable=var, value="low",font=font,command = update_image)
-    high_button = tk.Radiobutton(root, text="美少女ボイス", variable=var, value="high",font=font,command = update_image)
-    criminal_button = tk.Radiobutton(root, text="犯人ボイス", variable=var, value="criminal",font=font,command = update_image)
-
+    normal_button = tk.Radiobutton(
+        root,
+        text="そのまま",
+        variable=var,
+        value="normal",
+        font=font,
+        command=update_image,
+    )
+    robot_button = tk.Radiobutton(
+        root,
+        text="ロボットボイス",
+        variable=var,
+        value="robot",
+        font=font,
+        command=update_image,
+    )
+    low_button = tk.Radiobutton(
+        root,
+        text="イケメンボイス",
+        variable=var,
+        value="low",
+        font=font,
+        command=update_image,
+    )
+    high_button = tk.Radiobutton(
+        root,
+        text="美少女ボイス",
+        variable=var,
+        value="high",
+        font=font,
+        command=update_image,
+    )
+    criminal_button = tk.Radiobutton(
+        root,
+        text="犯人ボイス",
+        variable=var,
+        value="criminal",
+        font=font,
+        command=update_image,
+    )
 
     # ラジオボタンのサイズを大きくする
     height_size = 2
@@ -424,9 +473,12 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     criminal_button.config(indicatoron=False, width=width_size, height=height_size)
     normal_button.config(indicatoron=False, width=width_size, height=height_size)
 
-    #テキストの作成
-    font_t = ("游ゴシック", 30,"bold")
-    text = tk.Label(text="マイクを通した声が色んな声に変化するよ！ヘッドフォンをつけてみてね！",font=font_t)
+    # テキストの作成
+    font_t = ("游ゴシック", 30, "bold")
+    text = tk.Label(
+        text="マイクを通した声が色んな声に変化するよ！ヘッドフォンをつけてみてね！",
+        font=font_t,
+    )
 
     # テキストの配置
     text.place(
@@ -463,10 +515,10 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
 
     # ノンブロッキングなのでこの中で音声認識・音の変換などを行う
     while af.stream.is_active():
-        #print("なんの処理をしてもOK")
+        # print("なんの処理をしてもOK")
         if ENABLE_WORD_RECOGNITION:
             r = sr.Recognizer()
-            with sr.Microphone() as source: # pyaudioを使ってマイクを認識？
+            with sr.Microphone() as source:  # pyaudioを使ってマイクを認識？
                 r.adjust_for_ambient_noise(source)
                 print("音声を読み取っています")
                 audio = r.listen(source)
@@ -481,8 +533,10 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
                     print("エラー")
 
                 volume_now = aco.process_volume()
-                if round(volume_now, 2) == aco.enhancedvolume: # 現在のボリュームが耳拡張ボリュームだった場合にデフォルトボリュームに戻す
-                    if mute_timer.is_time_out(5) :
+                if (
+                    round(volume_now, 2) == aco.enhancedvolume
+                ):  # 現在のボリュームが耳拡張ボリュームだった場合にデフォルトボリュームに戻す
+                    if mute_timer.is_time_out(5):
                         aco.set_volume(aco.defaultvolume)
         else:
             time.sleep(1)
@@ -493,3 +547,6 @@ if __name__ == "__main__": #importされた場合に実行しないようにす�
     af.stream.close()
     af.close()
 
+
+if __name__ == "__main__":  # importされた場合に実行しないようにするらしい
+    main()
