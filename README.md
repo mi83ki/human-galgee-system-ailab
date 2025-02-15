@@ -171,7 +171,7 @@ cd submodules/stable-diffusion-webui/
 poetry run python tests/stable_diffusion_tests/python_sd_test.py
 ```
 
-ルートディレクトリに`testsd3.png`が生成されていればOKです。
+`tests/stable_diffusion_tests/images/testsd3.png`が生成されていればOKです。
 
 ## 起動
 
