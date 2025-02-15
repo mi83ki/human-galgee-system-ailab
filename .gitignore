@@ -196,3 +196,4 @@ pyrightconfig.json
 
 tests/stable_diffusion_tests/images/*.png
 !tests/stable_diffusion_tests/images/facetrim.png
+data/images/*.png
