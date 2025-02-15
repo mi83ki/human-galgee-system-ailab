@@ -7,7 +7,7 @@
 <!-- omit in toc -->
 ## 目次
 
-- [1. インストール（for Windows）](#1-インストールfor-windows)
+- [1. インストール（for Ubuntu）](#1-インストールfor-ubuntu)
   - [1.1. Pythonのインストール](#11-pythonのインストール)
   - [1.2. Poetryのインストール](#12-poetryのインストール)
   - [1.3. 依存パッケージのインストール](#13-依存パッケージのインストール)
@@ -17,45 +17,52 @@
     - [1.5.2. Stable Diffusion WebUIの動作確認](#152-stable-diffusion-webuiの動作確認)
 - [2. 起動](#2-起動)
 
-## 1. インストール（for Windows）
+## 1. インストール（for Ubuntu）
 
-**Windows用のインストール手順です。**\
-※Ubuntu用のインストール手順は[こちら](README_UBUNTU.md)を参照してください。
+**Ubuntu24.04用のインストール手順です。**\
+※Windows用のインストール手順は[こちら](README.md)を参照してください。
 
 ### 1.1. Pythonのインストール
 
-Python3.10以上がインストールされていない場合は、以下を参考にダウンロード・インストールします。\
-<https://www.javadrive.jp/python/install/index1.html>
+pyenvを使用してPythonをインストールします。
+
+```bash
+sudo apt update
+sudo apt install build-essential libffi-dev libssl-dev zlib1g-dev liblzma-dev libbz2-dev libreadline-dev libsqlite3-dev libopencv-dev tk-dev git
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+echo '' >> ~/.bashrc
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
+source ~/.bashrc
+pyenv -v
+```
+
+Python3.11.4をインストールする例
+
+```bash
+pyenv install --list
+pyenv install 3.11.4
+pyenv versions
+pyenv global 3.11.4
+python --version
+pip --version
+```
+
+参考URL：<https://microai.jp/blog/9b3280f8-4a92-41e5-a54e-08d518441235>
 
 ### 1.2. Poetryのインストール
 
 PoetryとはPythonの依存関係の管理とパッケージ化のためのツールで、npmのPythonバージョンのようなものです。
 
-PowerShellを開いて以下を実行します。
-
-```PowerShell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-```
-
-環境変数を追加します。
-
-```PowerShell
-[System.Environment]::SetEnvironmentVariable('path', $env:APPDATA + "\pypoetry\venv\Scripts;" + [System.Environment]::GetEnvironmentVariable('path', "User"),"User")
-```
-
-再度PowerShellを開き直して、以下を実行します。
-
-```PowerShell
+```bash
+pip install pipx
+pipx install poetry
+pipx ensurepath
+source ~/.bashrc
 poetry --version
 poetry self update
 poetry config virtualenvs.in-project true
-```
-
-※もしpoetryが登録されていない場合は、環境変数の`Path`に以下を追加してみてください。\
-参考URL：<https://zenn.dev/kkj/articles/d14470babe1930>
-
-```text
-%APPDATA%\Python\Scripts
 ```
 
 ### 1.3. 依存パッケージのインストール
@@ -82,10 +89,25 @@ Stable Diffusionが動作するようにセットアップします。
 
 Stable Diffusion WebUIをインストールします。
 
-ターミナルで以下のスクリプトを実行します。
+`submodules/stable-diffusion-webui/webui-user.sh`を編集します。
+
+```bash
+cd submodules/stable-diffusion-webui/
+vim webui-user.sh
+```
+
+13行目に`--api`と`--list`オプションを追記します。
+
+```bash
+# Commandline arguments for webui.py, for example: export COMMANDLINE_ARGS="--medvram --opt-split-attention"
+export COMMANDLINE_ARGS="--api --listen"
+```
+
+ターミナルで実行します。
 
 ```powershell
-.\bin\run-stable-diffusion-webui.bat
+cd submodules/stable-diffusion-webui/
+./webui.sh
 ```
 
 #### 1.5.2. Stable Diffusion WebUIの動作確認
@@ -105,7 +127,8 @@ poetry run python tests/stable_diffusion_tests/python_sd_test.py
 1. Stable Diffusion WebUIが起動していなければ、起動します。
 
     ```bash
-    .\bin\run-stable-diffusion-webui.bat
+    cd submodules/stable-diffusion-webui/
+    ./webui.sh
     ```
 
 1. 人類ギャルゲー化システムを起動します。
