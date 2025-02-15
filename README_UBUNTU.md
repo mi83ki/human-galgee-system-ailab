@@ -13,8 +13,9 @@
   - [1.3. 依存パッケージのインストール](#13-依存パッケージのインストール)
   - [1.4. サブモジュールのクローン](#14-サブモジュールのクローン)
   - [1.5. Stable Diffusionのセットアップ](#15-stable-diffusionのセットアップ)
-    - [1.5.1. Stable Diffusion WebUIのインストール](#151-stable-diffusion-webuiのインストール)
-    - [1.5.2. Stable Diffusion WebUIの動作確認](#152-stable-diffusion-webuiの動作確認)
+    - [1.5.1. CUDAのインストール](#151-cudaのインストール)
+    - [1.5.2. Stable Diffusion WebUIのインストール](#152-stable-diffusion-webuiのインストール)
+    - [1.5.3. Stable Diffusion WebUIの動作確認](#153-stable-diffusion-webuiの動作確認)
 - [2. 起動](#2-起動)
 
 ## 1. インストール（for Ubuntu）
@@ -85,7 +86,31 @@ git submodule update --init
 
 Stable Diffusionが動作するようにセットアップします。
 
-#### 1.5.1. Stable Diffusion WebUIのインストール
+#### 1.5.1. CUDAのインストール
+
+CUDAがインストールされていない場合は、インストールします。\
+[こちら](https://www.notion.so/Ubuntu24-04-CUDA-19bcdce3b6f8809ea455cd1bef37917c?pvs=4)の手順を参照してください。
+
+ターミナルで`nvidia-smi`コマンドを実行してインストールされているか確認できます。
+
+```bash
+$ nvidia-smi
+Sat Feb 15 18:33:40 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.86.15              Driver Version: 570.86.15      CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 2060        Off |   00000000:01:00.0 Off |                  N/A |
+| N/A   50C    P0             21W /   90W |    2922MiB /   6144MiB |      1%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+...
+```
+
+#### 1.5.2. Stable Diffusion WebUIのインストール
 
 Stable Diffusion WebUIをインストールします。
 
@@ -110,7 +135,7 @@ cd submodules/stable-diffusion-webui/
 ./webui.sh
 ```
 
-#### 1.5.2. Stable Diffusion WebUIの動作確認
+#### 1.5.3. Stable Diffusion WebUIの動作確認
 
 以下のコマンドでStable Diffusion WebUIの動作確認を行います。
 
