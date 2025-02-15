@@ -14,14 +14,14 @@
   - [1.2. Poetryのインストール](#12-poetryのインストール)
     - [1.2.1. Windowsの場合](#121-windowsの場合)
     - [1.2.2. Ubuntuの場合](#122-ubuntuの場合)
-  - [依存パッケージのインストール](#依存パッケージのインストール)
-  - [1.3. サブモジュールのクローン](#13-サブモジュールのクローン)
-  - [1.4. Stable Diffusionのセットアップ](#14-stable-diffusionのセットアップ)
-    - [1.4.1. Stable Diffusion WebUIのインストール](#141-stable-diffusion-webuiのインストール)
-      - [1.4.1.1. Windowsの場合](#1411-windowsの場合)
-      - [1.4.1.2. Ubuntuの場合](#1412-ubuntuの場合)
-    - [1.4.2. Stable Diffusion WebUIの動作確認](#142-stable-diffusion-webuiの動作確認)
-- [起動](#起動)
+  - [1.3. 依存パッケージのインストール](#13-依存パッケージのインストール)
+  - [1.4. サブモジュールのクローン](#14-サブモジュールのクローン)
+  - [1.5. Stable Diffusionのセットアップ](#15-stable-diffusionのセットアップ)
+    - [1.5.1. Stable Diffusion WebUIのインストール](#151-stable-diffusion-webuiのインストール)
+      - [1.5.1.1. Windowsの場合](#1511-windowsの場合)
+      - [1.5.1.2. Ubuntuの場合](#1512-ubuntuの場合)
+    - [1.5.2. Stable Diffusion WebUIの動作確認](#152-stable-diffusion-webuiの動作確認)
+- [2. 起動](#2-起動)
 
 ## 1. インストール
 
@@ -108,7 +108,7 @@ poetry self update
 poetry config virtualenvs.in-project true
 ```
 
-### 依存パッケージのインストール
+### 1.3. 依存パッケージのインストール
 
 リポジトリのルートディレクトリで以下のコマンドを実行します。
 
@@ -116,7 +116,7 @@ poetry config virtualenvs.in-project true
 poetry install
 ```
 
-### 1.3. サブモジュールのクローン
+### 1.4. サブモジュールのクローン
 
 ターミナルを開いて以下を実行する。
 
@@ -124,15 +124,15 @@ poetry install
 git submodule update --init
 ```
 
-### 1.4. Stable Diffusionのセットアップ
+### 1.5. Stable Diffusionのセットアップ
 
 Stable Diffusionが動作するようにセットアップします。
 
-#### 1.4.1. Stable Diffusion WebUIのインストール
+#### 1.5.1. Stable Diffusion WebUIのインストール
 
 Stable Diffusion WebUIをインストールします。
 
-##### 1.4.1.1. Windowsの場合
+##### 1.5.1.1. Windowsの場合
 
 ターミナルで以下のスクリプトを実行します。
 
@@ -140,7 +140,7 @@ Stable Diffusion WebUIをインストールします。
 .\bin\run-stable-diffusion-webui.bat
 ```
 
-##### 1.4.1.2. Ubuntuの場合
+##### 1.5.1.2. Ubuntuの場合
 
 `submodules/stable-diffusion-webui/webui-user.sh`を編集します。
 
@@ -163,7 +163,7 @@ cd submodules/stable-diffusion-webui/
 ./webui.sh
 ```
 
-#### 1.4.2. Stable Diffusion WebUIの動作確認
+#### 1.5.2. Stable Diffusion WebUIの動作確認
 
 以下のコマンドでStable Diffusion WebUIの動作確認を行います。
 
@@ -173,7 +173,7 @@ poetry run python tests/stable_diffusion_tests/python_sd_test.py
 
 `tests/stable_diffusion_tests/images/testsd3.png`が生成されていればOKです。
 
-## 起動
+## 2. 起動
 
 以下の手順で起動します。
 
@@ -186,5 +186,7 @@ poetry run python tests/stable_diffusion_tests/python_sd_test.py
 1. 人類ギャルゲー化システムを起動します。
 
     ```bash
-    poetry run python .\human_galgee_system\main.py
+    poetry run python -m human_galgee_system
     ```
+
+    ※VSCodeで`human-galgee-system-ailab.code-workspace`を開いている場合は、上記コマンドに変わって「F5」キーでデバッグ実行が可能です。
