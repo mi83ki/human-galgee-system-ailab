@@ -24,43 +24,6 @@ ENABLE_FORMANT_CONV = True  # フォルマント変換による音声加工を�
 ENABLE_WORD_RECOGNITION = False  # 単語の検閲モードを有効にするかどうか
 
 
-def update_image():
-    if var.get() == "low":
-        img_label.config(image=low_img)
-    elif var.get() == "high":
-        img_label.config(image=high_img)
-    elif var.get() == "criminal":
-        img_label.config(image=crimate_img)
-    elif var.get() == "robot":
-        img_label.config(image=robot_img)
-    elif var.get() == "normal":
-        img_label.config(image=normal_img)
-
-
-def change_voice_parameter():
-    selected_value = var.get()
-    f0_rate = 0.0
-    sp_rate = 0.0
-
-    if selected_value == "high":
-        f0_rate = 2.4
-        sp_rate = 0.78
-    elif selected_value == "criminal":
-        f0_rate = 1.2
-        sp_rate = 0.5
-    elif selected_value == "low":
-        f0_rate = 0.8
-        sp_rate = 1.4
-    elif selected_value == "robot":
-        f0_rate = 0.5
-        sp_rate = 2.4
-    elif selected_value == "normal":
-        f0_rate = 1.0
-        sp_rate = 1.0
-
-    return f0_rate, sp_rate
-
-
 def convert(signal, f0_rate, sp_rate):
     # f0_rate = 2.4
     # sp_rate = 0.78
@@ -91,7 +54,7 @@ def convert(signal, f0_rate, sp_rate):
 
 
 class WorkerThread(threading.Thread):
-    def __init__(self, block_length, margin_length):
+    def __init__(self, block_length, margin_length, viewer):
         super(WorkerThread, self).__init__()
         self.is_stop = False
         self.lock = threading.Lock()
@@ -99,6 +62,8 @@ class WorkerThread(threading.Thread):
         self.result = []
 
         self.prev_samples = []
+
+        self.__viewer = viewer
 
     def stop(self):
         self.is_stop = True
@@ -116,7 +81,7 @@ class WorkerThread(threading.Thread):
 
                 # pitch sift
                 sample = sample.astype(np.float64)
-                f0_rate, sp_rate = change_voice_parameter()
+                f0_rate, sp_rate = self.__viewer.change_voice_parameter()
                 sample = convert(sample, f0_rate, sp_rate)
 
                 # overlap
@@ -374,6 +339,167 @@ class KeyInput:  # キー入力クラス
                 break
 
 
+class VoiceTranceformerViewer:
+    def __init__(self):
+        self.__root = tk.Tk()
+        self.__root.geometry("1920x1080")
+        self.__root.title("美少女ヘッドフォンver1.5")
+
+        # 画像をオープン
+        high = Image.open("data/images/high.png")
+        low = Image.open("data/images/low.png")
+        crimate = Image.open("data/images/crimate.png")
+        robot = Image.open("data/images/robot.png")
+        normal = Image.open("data/images/normal.PNG")
+        # 画像のサイズを変更
+        rhigh = high.resize((800, 800))
+        rlow = low.resize((800, 800))
+        rcrimate = crimate.resize((800, 800))
+        rrobot = robot.resize((800, 800))
+        rnormal = normal.resize((800, 800))
+
+        # 画像を読み込む
+        self.__low_img = ImageTk.PhotoImage(rlow)
+        self.__high_img = ImageTk.PhotoImage(rhigh)
+        self.__crimate_img = ImageTk.PhotoImage(rcrimate)
+        self.__robot_img = ImageTk.PhotoImage(rrobot)
+        self.__normal_img = ImageTk.PhotoImage(rnormal)
+
+        # ラジオボタンの作成
+        self.__var = tk.StringVar()
+        self.__var.set("high")
+
+        # 画像の読み込み
+        self.__img_label = tk.Label(self.__root, image=self.__high_img)
+
+        font = ("游ゴシック", 35)
+        normal_button = tk.Radiobutton(
+            self.__root,
+            text="そのまま",
+            variable=self.__var,
+            value="normal",
+            font=font,
+            command=self.__update_image,
+        )
+        robot_button = tk.Radiobutton(
+            self.__root,
+            text="ロボットボイス",
+            variable=self.__var,
+            value="robot",
+            font=font,
+            command=self.__update_image,
+        )
+        low_button = tk.Radiobutton(
+            self.__root,
+            text="イケメンボイス",
+            variable=self.__var,
+            value="low",
+            font=font,
+            command=self.__update_image,
+        )
+        high_button = tk.Radiobutton(
+            self.__root,
+            text="美少女ボイス",
+            variable=self.__var,
+            value="high",
+            font=font,
+            command=self.__update_image,
+        )
+        criminal_button = tk.Radiobutton(
+            self.__root,
+            text="犯人ボイス",
+            variable=self.__var,
+            value="criminal",
+            font=font,
+            command=self.__update_image,
+        )
+
+        # ラジオボタンのサイズを大きくする
+        height_size = 2
+        width_size = 15
+        robot_button.config(indicatoron=False, width=width_size, height=height_size)
+        low_button.config(indicatoron=False, width=width_size, height=height_size)
+        high_button.config(indicatoron=False, width=width_size, height=height_size)
+        criminal_button.config(indicatoron=False, width=width_size, height=height_size)
+        normal_button.config(indicatoron=False, width=width_size, height=height_size)
+
+        # テキストの作成
+        font_t = ("游ゴシック", 30, "bold")
+        text = tk.Label(
+            text="マイクを通した声が色んな声に変化するよ！ヘッドフォンをつけてみてね！",
+            font=font_t,
+        )
+
+        # テキストの配置
+        text.place(
+            x=20,
+            y=20,
+        )
+        # ボタンの配置
+        normal_button.place(
+            x=0,
+            y=50,
+        )
+        robot_button.place(
+            x=0,
+            y=200,
+        )
+        low_button.place(
+            x=0,
+            y=350,
+        )
+        high_button.place(
+            x=0,
+            y=500,
+        )
+        criminal_button.place(
+            x=0,
+            y=650,
+        )
+        self.__img_label.place(
+            x=500,
+            y=100,
+        )
+
+    def __update_image(self):
+        if self.__var.get() == "low":
+            self.__img_label.config(image=self.__low_img)
+        elif self.__var.get() == "high":
+            self.__img_label.config(image=self.__high_img)
+        elif self.__var.get() == "criminal":
+            self.__img_label.config(image=self.__crimate_img)
+        elif self.__var.get() == "robot":
+            self.__img_label.config(image=self.__robot_img)
+        elif self.__var.get() == "normal":
+            self.__img_label.config(image=self.__normal_img)
+
+    def change_voice_parameter(self):
+        selected_value = self.__var.get()
+        f0_rate = 0.0
+        sp_rate = 0.0
+
+        if selected_value == "high":
+            f0_rate = 2.4
+            sp_rate = 0.78
+        elif selected_value == "criminal":
+            f0_rate = 1.2
+            sp_rate = 0.5
+        elif selected_value == "low":
+            f0_rate = 0.8
+            sp_rate = 1.4
+        elif selected_value == "robot":
+            f0_rate = 0.5
+            sp_rate = 2.4
+        elif selected_value == "normal":
+            f0_rate = 1.0
+            sp_rate = 1.0
+
+        return f0_rate, sp_rate
+
+    def main_loop(self):
+        self.__root.mainloop()
+
+
 def main():
     # AudioCensorshipのインスタンスを作る
     ace = AudioCensorship()
@@ -383,7 +509,8 @@ def main():
     block_length = 8
     margin_length = 1
 
-    worker_th = WorkerThread(block_length, margin_length)
+    viewer = VoiceTranceformerViewer()
+    worker_th = WorkerThread(block_length, margin_length, viewer)
     worker_th.setDaemon(True)
     worker_th.start()
     # AudioFileterのインスタンスを作る
@@ -392,126 +519,7 @@ def main():
     # ストリーミングを始める
     af.stream.start_stream()
 
-    root = tk.Tk()
-    root.geometry("1920x1080")
-    root.title("美少女ヘッドフォンver1.5")
-
-    # 画像をオープン
-    high = Image.open("high.png")
-    low = Image.open("low.png")
-    crimate = Image.open("crimate.png")
-    robot = Image.open("robot.png")
-    normal = Image.open("normal.PNG")
-    # 画像のサイズを変更
-    rhigh = high.resize((800, 800))
-    rlow = low.resize((800, 800))
-    rcrimate = crimate.resize((800, 800))
-    rrobot = robot.resize((800, 800))
-    rnormal = normal.resize((800, 800))
-
-    # 画像を読み込む
-    low_img = ImageTk.PhotoImage(rlow)
-    high_img = ImageTk.PhotoImage(rhigh)
-    crimate_img = ImageTk.PhotoImage(rcrimate)
-    robot_img = ImageTk.PhotoImage(rrobot)
-    normal_img = ImageTk.PhotoImage(rnormal)
-
-    # ラジオボタンの作成
-    var = tk.StringVar()
-
-    # 画像の読み込み
-    img_label = tk.Label(root, image=high_img)
-
-    font = ("游ゴシック", 35)
-    normal_button = tk.Radiobutton(
-        root,
-        text="そのまま",
-        variable=var,
-        value="normal",
-        font=font,
-        command=update_image,
-    )
-    robot_button = tk.Radiobutton(
-        root,
-        text="ロボットボイス",
-        variable=var,
-        value="robot",
-        font=font,
-        command=update_image,
-    )
-    low_button = tk.Radiobutton(
-        root,
-        text="イケメンボイス",
-        variable=var,
-        value="low",
-        font=font,
-        command=update_image,
-    )
-    high_button = tk.Radiobutton(
-        root,
-        text="美少女ボイス",
-        variable=var,
-        value="high",
-        font=font,
-        command=update_image,
-    )
-    criminal_button = tk.Radiobutton(
-        root,
-        text="犯人ボイス",
-        variable=var,
-        value="criminal",
-        font=font,
-        command=update_image,
-    )
-
-    # ラジオボタンのサイズを大きくする
-    height_size = 2
-    width_size = 15
-    robot_button.config(indicatoron=False, width=width_size, height=height_size)
-    low_button.config(indicatoron=False, width=width_size, height=height_size)
-    high_button.config(indicatoron=False, width=width_size, height=height_size)
-    criminal_button.config(indicatoron=False, width=width_size, height=height_size)
-    normal_button.config(indicatoron=False, width=width_size, height=height_size)
-
-    # テキストの作成
-    font_t = ("游ゴシック", 30, "bold")
-    text = tk.Label(
-        text="マイクを通した声が色んな声に変化するよ！ヘッドフォンをつけてみてね！",
-        font=font_t,
-    )
-
-    # テキストの配置
-    text.place(
-        x=20,
-        y=20,
-    )
-    # ボタンの配置
-    normal_button.place(
-        x=0,
-        y=50,
-    )
-    robot_button.place(
-        x=0,
-        y=200,
-    )
-    low_button.place(
-        x=0,
-        y=350,
-    )
-    high_button.place(
-        x=0,
-        y=500,
-    )
-    criminal_button.place(
-        x=0,
-        y=650,
-    )
-    img_label.place(
-        x=500,
-        y=100,
-    )
-
-    root.mainloop()
+    viewer.main_loop()
 
     # ノンブロッキングなのでこの中で音声認識・音の変換などを行う
     while af.stream.is_active():
