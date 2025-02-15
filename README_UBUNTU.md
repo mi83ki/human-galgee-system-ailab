@@ -114,25 +114,10 @@ Sat Feb 15 18:33:40 2025
 
 Stable Diffusion WebUIをインストールします。
 
-`submodules/stable-diffusion-webui/webui-user.sh`を編集します。
+ターミナルで以下のスクリプトを実行します。
 
 ```bash
-cd submodules/stable-diffusion-webui/
-vim webui-user.sh
-```
-
-13行目に`--api`と`--list`オプションを追記します。
-
-```bash
-# Commandline arguments for webui.py, for example: export COMMANDLINE_ARGS="--medvram --opt-split-attention"
-export COMMANDLINE_ARGS="--api --listen"
-```
-
-ターミナルで実行します。
-
-```powershell
-cd submodules/stable-diffusion-webui/
-./webui.sh
+./bin/run-stable-diffusion-webui.sh
 ```
 
 #### 1.5.3. Stable Diffusion WebUIの動作確認
@@ -152,8 +137,7 @@ poetry run python tests/stable_diffusion_tests/python_sd_test.py
 1. Stable Diffusion WebUIが起動していなければ、起動します。
 
     ```bash
-    cd submodules/stable-diffusion-webui/
-    ./webui.sh
+    ./bin/run-stable-diffusion-webui.sh
     ```
 
 1. 人類ギャルゲー化システムを起動します。
