@@ -4,5 +4,49 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.formatOnSaveMode": "modificationsIfAvailable",
+      "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+      },
+      "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.lint.enable": true,
+    "ruff.lint.args": ["--config=${workspaceFolder}/pyproject.toml"],
+    // 単体テストツールとしてpytestを有効化
+    "python.testing.pytestEnabled": true,
+    // ファイル保存時にテスト対象を自動的に探索
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    // pytest実行時の引数設定を追加
+    // -vs: printの出力あり
+    // --cov: カバレッジ計測の有効化
+    // --cov-branch: カバレッジ計測で条件分岐も有効化
+    // --cov-report xml: カバレッジ計測レポートをxml形式(coverage.xml)で出力
+    "python.testing.pytestArgs": ["-vs", "--cov=sassroom", "--cov-branch", "--cov-report=xml"],
+    // エディタ上のカバレッジ表示設定
+    // ガター(ブレークポイント等が表示される場所)でのカバレッジ表示有無(default: true)
+    "coverage-gutters.showGutterCoverage": true,
+    // エディタ行でのカバレッジ表示有無(default: false)
+    "coverage-gutters.showLineCoverage": true,
+    // ルーラーでのカバレッジ表示有無(default: false)
+    "coverage-gutters.showRulerCoverage": true
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: モジュール",
+				"type": "debugpy",
+				"request": "launch",
+				"module": "human_galgee_system",
+				"justMyCode": true
+			}
+		]
+	}
 }

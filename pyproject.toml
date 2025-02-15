@@ -17,3 +17,56 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Blackの設定を踏襲
+line-length = 88
+
+# Pythonの最低バージョン（設定されたバージョンで利用できないルールは提案されない）
+target-version = "py310"
+
+[tool.ruff.lint]
+# 可能な限りルールを有効化
+select = ["ALL"]
+# 除外するルール
+ignore = ["D400", "D415", "I001", "ANN401", "E501", "PLR0913"]
+
+# D400: 最初の行がピリオドで終わっていない（日本語の場合もあるため無効化）
+# D415: 最初の行がピリオド、疑問符、感嘆符などの句読点で終わっていない（日本語の場合もあるため無効化）
+# I001: importがisortで指定した順序になってない
+# ANN401: 型の引数がAnyよりも具体的な方で注釈されているか（意図してAnyを使用するため無効化）
+# E501: 1行の文字数が長い（フォーマッタで制御するため無効化）
+# PLR0913: 引数が多い（オプション引数を多用するため無効化）
+
+# すべての有効なルールに対する修正を許可
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+    # at least this three should be fine in tests:
+    "S101", # asserts allowed in tests...
+    "ARG", # Unused function args -> fixtures nevertheless are functionally relevant...
+    "FBT", # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    # The below are debateable
+    "PLR2004", # Magic value used in comparison, ...
+    "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "D100",     # Missing docstring in public module
+    "ANN",      # Missing type annotation
+    "ERA001",   # Found commented-out code
+    "SLF001",   # Private member accessed
+]
+
+"__init__.py" = [
+    "D104",     # Missing docstring in public package
+    "F401",
+    "F403"
+]
+
+[tool.ruff.format]
+# Blackの設定を踏襲
+quote-style = "double"
+
+[tool.ruff.pydocstyle]
+# DocstringをGoogleスタイルに設定
+convention = "google"
