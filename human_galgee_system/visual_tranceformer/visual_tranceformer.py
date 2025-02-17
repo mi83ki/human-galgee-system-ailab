@@ -23,6 +23,7 @@ CONVERTED_IMAGE_PATH = f"{IMAGE_DIR}girlimage.png"
 def conv_face2girl(api, prompt, faceimage):
     # 画像を生成する
     # faceimage = Image.open(FACETRIM_IMAGE_PATH)
+    print({"prompt": prompt})
     girlimage = api.img2img(
         images=[faceimage],
         prompt=prompt,
@@ -40,7 +41,7 @@ def get_args():
     parser.add_argument(
         "--prompt",
         type=str,
-        default="super fine illustration, best quality, anime screencap, cowboy shot, 1 girl, brown hair, basketball court, team uniform, realistic, beautiful, anime, anime faces",
+        default="a young girl with detailed reflecting eyes by professional digital painting in granblue fantasy style, beautiful pretty cute face, full body shot of loli anime girl, a small smile, short blonde hair, big ribbon on the head, wearing fantasy clothes, front lighting, 8k resolution, featured on pixiv",
     )
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--width", help="cap width", type=int, default=960)
