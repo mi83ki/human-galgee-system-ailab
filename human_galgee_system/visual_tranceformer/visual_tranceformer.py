@@ -18,20 +18,31 @@ IMAGE_DIR = "data/images/temp/"
 FACETRIM_IMAGE_PATH = f"{IMAGE_DIR}facetrim.png"
 CONVERTED_IMAGE_PATH = f"{IMAGE_DIR}girlimage.png"
 
+# 画像が更新されたかのフラグ
+g_is_image_updated = True
+g_olimage = None
+g_lock = threading.Lock()
 
 # StableDiffusionのimg2imgで画像を生成する
 def conv_face2girl(api, prompt, faceimage):
+    global g_is_image_updated
     # 画像を生成する
     # faceimage = Image.open(FACETRIM_IMAGE_PATH)
     print({"prompt": prompt})
-    girlimage = api.img2img(
-        images=[faceimage],
-        prompt=prompt,
-        seed=5555,
-        cfg_scale=6.5,
-        denoising_strength=0.5,
-    )
-    girlimage.image.save(CONVERTED_IMAGE_PATH)
+    try:
+        girlimage = api.img2img(
+            images=[faceimage],
+            prompt=prompt,
+            seed=5555,
+            cfg_scale=6.5,
+            denoising_strength=0.5,
+        )
+        girlimage.image.save(CONVERTED_IMAGE_PATH)
+        with g_lock:
+            g_is_image_updated = True
+    except Exception as ex:
+        print({"action": "conv_face2girl", "error": str(ex)})
+        time.sleep(5)
     # 一定時間待つ
     time.sleep(1)
 
@@ -191,10 +202,14 @@ def culculate_face_pos_and_size(image, detection):
 
 # 重ね合わせ画像をresizeして透明化して重ねる
 def overlay_illust(bg, posX, posY, sizeH):
+    global g_olimage, g_is_image_updated
     try:
-        olimage = cv.imread(CONVERTED_IMAGE_PATH, cv.IMREAD_UNCHANGED)
+        if g_is_image_updated:
+            g_olimage = cv.imread(CONVERTED_IMAGE_PATH, cv.IMREAD_UNCHANGED)
+            with g_lock:
+                g_is_image_updated = False
         resize_ol_image = cv.resize(
-            olimage,
+            g_olimage,
             dsize=None,
             fx=sizeH * 0.0035,
             fy=sizeH * 0.0035,
@@ -223,7 +238,7 @@ def overlay_illust(bg, posX, posY, sizeH):
             ] = resize_ol_image
         return bg
     except Exception as ex:
-        print(ex)
+        print({"action": "overlay_illust", "error": str(ex)})
         return bg
 
 
