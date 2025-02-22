@@ -48,7 +48,11 @@
 				"justMyCode": true,
         "args": [
           "--device",
-          "1"
+          "1",
+          "--width",
+          "640",
+          "--height",
+          "480"
         ]
 			}
 		]

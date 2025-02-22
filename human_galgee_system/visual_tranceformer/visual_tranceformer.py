@@ -166,7 +166,7 @@ def main():
         overlay_image = overlay_illust(image, posCX, posCY, sizeH)
         # 画面反映 #############################################################
         cv.namedWindow("window", cv.WINDOW_NORMAL)
-        cv.resizeWindow("window", 1140, 960)
+        cv.resizeWindow("window", int(960 * cap_width / cap_height), 960)
         cv.imshow("window", overlay_image)
     cap.release()
     cv.destroyAllWindows()
