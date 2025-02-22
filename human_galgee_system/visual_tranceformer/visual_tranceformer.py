@@ -44,7 +44,7 @@ def conv_face2girl(api, prompt, faceimage):
         print({"action": "conv_face2girl", "error": str(ex)})
         time.sleep(5)
     # 一定時間待つ
-    time.sleep(1)
+    time.sleep(0.2)
 
 
 def get_args():

@@ -5,7 +5,7 @@ from human_galgee_system.visual_tranceformer import visual_tranceformer
 from human_galgee_system.voice_tranceformer import voice_tranceformer
 
 ENABLE_VISUAL_TRANSFORMATION = True
-ENABLE_VOICE_TRANSFORMATION = False
+ENABLE_VOICE_TRANSFORMATION = True
 
 if __name__ == "__main__":
     # 視覚変換のスレッドを開始
