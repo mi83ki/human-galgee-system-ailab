@@ -23,12 +23,13 @@ CONVERTED_IMAGE_PATH = f"{IMAGE_DIR}girlimage.png"
 def conv_face2girl(api, prompt, faceimage):
     # 画像を生成する
     # faceimage = Image.open(FACETRIM_IMAGE_PATH)
+    print({"prompt": prompt})
     girlimage = api.img2img(
         images=[faceimage],
         prompt=prompt,
         seed=5555,
         cfg_scale=6.5,
-        denoising_strength=0.4,
+        denoising_strength=0.5,
     )
     girlimage.image.save(CONVERTED_IMAGE_PATH)
     # 一定時間待つ
@@ -40,7 +41,7 @@ def get_args():
     parser.add_argument(
         "--prompt",
         type=str,
-        default="super fine illustration, best quality, anime screencap, cowboy shot, 1 girl, brown hair, basketball court, team uniform, realistic, beautiful, anime, anime faces",
+        default="a young girl with detailed reflecting eyes by professional digital painting in granblue fantasy style, beautiful pretty cute face, full body shot of loli anime girl, a small smile, short blonde hair, big ribbon on the head, wearing fantasy clothes, front lighting, 8k resolution, featured on pixiv",
     )
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--width", help="cap width", type=int, default=960)
@@ -148,6 +149,9 @@ def main():
         elif key == ord("4"):  # おじいちゃんモード
             prompt = "masterpiece,high quality,(elder man),a photo of male"
             mode = "All Human Ojii-Chan Mode"
+        elif key == ord("5"):  # サイバーパンクモード
+            prompt = "masterpiece, best quality, high resolution, cyberpunk anime style, beautiful VTuber, upper body, highly detailed face, glowing red cybernetic eyes, short silver bob cut, futuristic bodysuit with neon lines, cyber neon background, soft lighting, smooth shading"
+            mode = "Cyberpunk Mode"
         # StableDiffusion返還後画像を重ねる
         cv.putText(
             image,
