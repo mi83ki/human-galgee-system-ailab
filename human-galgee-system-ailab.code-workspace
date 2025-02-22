@@ -45,7 +45,11 @@
 				"type": "debugpy",
 				"request": "launch",
 				"module": "human_galgee_system",
-				"justMyCode": true
+				"justMyCode": true,
+        "args": [
+          "--device",
+          "1"
+        ]
 			}
 		]
 	}
